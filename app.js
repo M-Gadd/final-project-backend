@@ -4,14 +4,14 @@ const bodyParser   = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express      = require('express');
 const favicon      = require('serve-favicon');
-const hbs          = require('hbs');
 const mongoose     = require('mongoose');
 const logger       = require('morgan');
 const path         = require('path');
 
-const session    = require("express-session");
-const MongoStore = require('connect-mongo')(session);
-const flash      = require("connect-flash");
+const session      = require("express-session");
+const MongoStore   = require('connect-mongo')(session);
+const cors         = require('cors');
+const bcrypt       = require('bcrypt');
     
 
 mongoose.Promise = Promise;
@@ -43,43 +43,43 @@ app.use(require('node-sass-middleware')({
 }));
       
 
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 
-
-hbs.registerHelper('ifUndefined', (value, options) => {
-  if (arguments.length < 2)
-      throw new Error("Handlebars Helper ifUndefined needs 1 parameter");
-  if (typeof value !== undefined ) {
-      return options.inverse(this);
-  } else {
-      return options.fn(this);
-  }
-});
+app.use(cors({
+  credentials: true,
+  origin: ['http://localhost:4200']
+}));
   
-
-// default value for title local
-app.locals.title = 'Express - Generated with IronGenerator';
-
 
 // Enable authentication using session + passport
 app.use(session({
   secret: 'irongenerator',
   resave: true,
   saveUninitialized: true,
-  store: new MongoStore( { mongooseConnection: mongoose.connection })
+  store: new MongoStore( { mongooseConnection: mongoose.connection }),
+  cookie: { expires: new Date(253402300000000) }
 }))
-app.use(flash());
+
 require('./passport')(app);
     
 
-const index = require('./routes/index');
-app.use('/', index);
-
 const authRoutes = require('./routes/auth');
-app.use('/auth', authRoutes);
+app.use('/user', authRoutes);
+
+const teacherRoutes = require('./routes/auth-teacher');
+app.use('/teacher', teacherRoutes);
+
+const courseRoutes = require('./routes/auth-course');
+app.use('/course', courseRoutes);
+
+const adminRoutes = require('./routes/auth-admin');
+app.use('/admin', adminRoutes);
       
 
 module.exports = app;
+
+//to divert any url to the angular routes
+app.use((req,res,next) => {
+  res.sendFile(__dirname + '/public/index.html');
+});

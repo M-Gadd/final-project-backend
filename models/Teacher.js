@@ -1,22 +1,30 @@
 const mongoose = require('mongoose');
 const Schema   = mongoose.Schema;
 
-const userSchema = new Schema({
+
+const teacherSchema = new Schema({
   firstName: {type: String, required: true},
   lastName: {type:String, required: true},
   password: {type:String, required: true},
-  age: Number,
+  description: {type:String},
   language: String,
+  age: Number,
   email: {type:String, required: true, unique: true},
-  image: String,
-  fieldsOfInterest: Array,
-  nationality: String,
+  image: {type:String},
+  fieldsOfSpeciality: Array,
   courses: [
     {
       type: Schema.Types.ObjectId,
       ref: "Course"
     }
   ],
+  nationality: String,
+  qualifications: String,
+  status: {
+    type: String,
+    enum: ["active", "in-active"],
+    default: ["in-active"]
+  },
   role: String
 }, {
   timestamps: {
@@ -25,5 +33,7 @@ const userSchema = new Schema({
   }
 });
 
-const User = mongoose.model('User', userSchema);
-module.exports = User;
+
+
+const Teacher = mongoose.model('Teacher', teacherSchema);
+module.exports = Teacher;

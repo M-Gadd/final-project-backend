@@ -10,13 +10,18 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = process.env.ENV === 'development' ? err : {};
+  //Changes
+  console.log("This is an ERROR! 💩");
+  console.log(err);
+  //changes//
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  
+  //changes
+  res.json({ message: err.message });
+  //changes
+
 }); // Express middleware to handle errors
 
 let server = http.createServer(app);
@@ -42,3 +47,4 @@ server.on('error', error => {
 server.listen(process.env.PORT, () => {
   console.log(`Listening on http://localhost:${process.env.PORT}`);
 });
+
