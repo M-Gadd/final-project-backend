@@ -2,6 +2,7 @@ const express = require("express");
 const passport = require('passport');
 const authRoutes = express.Router();
 const User = require("../models/User");
+const Course = require("../models/Course");
 const multer = require('multer');
 const cloudinary = require("cloudinary");
 const cloudinaryStorage = require("multer-storage-cloudinary");
@@ -134,6 +135,22 @@ authRoutes.get("/:userId/courses", (req,res,next) =>{
   });
 });
 
+
+
+authRoutes.get("/homecourses", (req,res,next)=>{
+  Course
+    .find()
+    // .limit(20)
+    .sort({createdAt: -1 })
+    .then((courses)=>{
+      console.log(courses)
+      res.json(courses);
+    })
+    .catch((err)=>{
+      next(err);
+    });
+
+})
 
 
 

@@ -2,6 +2,7 @@ const express = require("express");
 const passport = require('passport');
 const teacherRoutes = express.Router();
 const Teacher = require("../models/Teacher");
+const Course = require("../models/Course");
 const multer = require('multer');
 const cloudinary = require("cloudinary");
 const cloudinaryStorage = require("multer-storage-cloudinary");
@@ -23,9 +24,9 @@ cloudinary.config({
   cloudinaryStorage({
     cloudinary,
     folder: 'teachers',
-    params: {
-      resource_type: "raw"
-    }
+    // params: {
+    //   resource_type: "raw"
+    // }
   });
 
 const upload = multer({ storage })
@@ -155,7 +156,7 @@ const {firstName, lastName, userName, description, age,
 
 
 // PUT /api/teacher/:teacherId/editpicture
-teacherRoutes.put("/:teacherId/editpicture", upload.single('image'), (req,res,next)=>{
+teacherRoutes.post("/:teacherId/editpicture", upload.single('file'), (req,res,next)=>{
 
   if(!mongoose.Types.ObjectId.isValid(req.params.teacherId)){
     next();  // show 404 if bad ObjectId format
@@ -202,6 +203,40 @@ teacherRoutes.get("/:teacherId/courses", (req,res,next) =>{
   });
 });
 
+
+teacherRoutes.get("/:teacherId/courses/:courseId", (req,res,next) =>{ 
+  if(!mongoose.Types.ObjectId.isValid(req.params.courseId)){
+      next();  // show 404 if bad ObjectId format
+      return;
+  }
+  Course.findById(req.params.courseId)
+  .then((course)=>{
+    if(!course) {
+      next(); // show 404 if no phone was found 
+      return;
+    }
+    res.json(course);
+  })
+  .catch((err)=>{
+    next(err);
+  });
+});
+
+
+teacherRoutes.get("/homecourses", (req,res,next)=>{
+  Course
+    .find()
+    // .limit(20)
+    .sort({createdAt: -1 })
+    .then((courses)=>{
+      console.log(courses)
+      res.json(courses);
+    })
+    .catch((err)=>{
+      next(err);
+    });
+
+})
 
 // Dele/:teacherId
 teacherRoutes.delete("/:teacherId", (req,res,next) =>{

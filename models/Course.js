@@ -14,7 +14,7 @@ const courseSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Teacher"
   },
-  videos: [{name:String, videoUrl: String}],
+  videos: [{vidName:String, videoUrl: String}],
   students: [
     {
       type: Schema.Types.ObjectId,

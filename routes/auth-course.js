@@ -4,6 +4,7 @@ const courseRoutes = express.Router();
 const Course = require("../models/Course");
 const mongoose = require("mongoose");
 const multer = require('multer');
+const Teacher = require('../models/Teacher')
 const cloudinary = require("cloudinary");
 const cloudinaryStorage = require("multer-storage-cloudinary");
 
@@ -26,31 +27,13 @@ cloudinary.config({
   
   const upload = multer({ storage })
 
-// Bcrypt to encrypt passwords
-// const bcrypt = require("bcrypt");
-// const bcryptSalt = 10;
-
-
-// teacherRoutes.post("/login", passport.authenticate("local", {
-//   successRedirect: "/",
-//   failureRedirect: "/auth/login",
-//   failureFlash: true,
-//   passReqToCallback: true
-// }));
-
-
-
 
 // courseRoutes.post("/signup", upload.fields([{name: 'image'}, {name: 'video'}]), (req, res, next) => {
 
 courseRoutes.post("/:userId/add", (req, res, next) => {
+  console.log("I am in the backend")
   const {name, description, category, language} = req.body
   
-  // const {originalname, secure_url} = req.files["image"][0];  
-  // const video = req.files['videoFile'].map(function(vid){
-  //   const {originalname, secure_url} = vid;
-  //   return {name: originalname, mediaFile: secure_url}
-  // })
 
   if (name === "" || description === "" || category === "" || language === "") {
     const err = new Error("Please fill in all fields");
@@ -59,44 +42,41 @@ courseRoutes.post("/:userId/add", (req, res, next) => {
     return;
   }
 
-  // Course.findOne({ email }, "email", (err, user) => {
-  //   if (user !== null) {
-  //     res.render("auth/signup", { message: "The email already exists" });
-  //     return;
-  //   }
 
   Course.create({name, description, category, language, author: req.params.userId})
   .then((newCourse)=>{
+    Teacher.findByIdAndUpdate(
+      req.params.userId,
+      { $push: {courses: newCourse} },
+      {runValidators: true, new: true} 
+    )
+    .then(()=>{
       res.json(newCourse);
+      return;
+    })
+
   })
 
   .catch((err)=>{
     next(err);
   })
   
-    // const salt = bcrypt.genSaltSync(bcryptSalt);
-    // const hashPass = bcrypt.hashSync(password, salt);
-
-    // const newCourse = new Course({
-    //   name,
-    //   description,
-    //   category,
-    //   language,
-    //   status,
-    //   image: secure_url,
-    //   video: video
-    // });
-
-    // newCourse.save((err) => {
-    //   if (err) {
-    //     res.render("auth/signup", { message: "Something went wrong" });
-    //   } else {
-    //     res.redirect("/");
-    //   }
-    // });
   });
-// });
 
+  courseRoutes.get("/homecourses", (req,res,next)=>{
+    Course
+      .find()
+      // .limit(20)
+      .sort({createdAt: -1 })
+      .then((courses)=>{
+        console.log(courses)
+        res.json(courses);
+      })
+      .catch((err)=>{
+        next(err);
+      });
+  
+  })
 // GET /api/course/:courseId
 courseRoutes.get("/:courseId", (req,res,next) =>{ 
   if(!mongoose.Types.ObjectId.isValid(req.params.courseId)){
@@ -146,7 +126,7 @@ courseRoutes.put("/:courseId/edit", (req,res,next)=>{
 
 
 // PUT /api/course/:courseId/edit/picture
-courseRoutes.put("/:courseId/editpicture", upload.single('image'), (req,res,next)=>{
+courseRoutes.post("/:courseId/editpicture", upload.single('file'), (req,res,next)=>{
 
   if(!mongoose.Types.ObjectId.isValid(req.params.courseId)){
     next();  // show 404 if bad ObjectId format
@@ -200,17 +180,20 @@ courseRoutes.get("/:courseId/videos", (req,res,next)=>{
 
 
 // router.put("/course/:courseId/videos/add", (req,res,next)=>{}) // AAAASSSKKKK
-courseRoutes.put("/:courseId/videos/add", upload.single('video'), (req,res,next)=>{
+courseRoutes.post("/:courseId/videos/add", upload.single('file'), (req,res,next)=>{
+
+  // console.log("BACCCCCKKKK EEEEENNNNDDD")
 
   if(!mongoose.Types.ObjectId.isValid(req.params.courseId)){
     next();  // show 404 if bad ObjectId format
     return;
-}
+} 
+// console.log(req.file);
   const {originalname, secure_url} = req.file;
 
   Course.findByIdAndUpdate (
     req.params.courseId,
-    {name:originalname, videoUrl:secure_url}, 
+    {vidName:originalname, videoUrl:secure_url}, 
     {runValidators: true, new: true }  //new gets us the updated version
   )
   .then((updateCourse)=> {
