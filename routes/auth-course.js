@@ -2,11 +2,14 @@ const express = require("express");
 const passport = require('passport');
 const courseRoutes = express.Router();
 const Course = require("../models/Course");
+const User = require("../models/User");
 const mongoose = require("mongoose");
 const multer = require('multer');
 const Teacher = require('../models/Teacher')
 const cloudinary = require("cloudinary");
+
 const cloudinaryStorage = require("multer-storage-cloudinary");
+const cloudinaryStorage2 = require("multer-storage-cloudinary");
 
 
 cloudinary.config({
@@ -20,12 +23,22 @@ cloudinary.config({
   cloudinaryStorage({
     cloudinary,
     folder: 'courses',
+    // params: {
+    //   resource_type: "video"
+    // }
+  });
+
+  const storage2 =
+  cloudinaryStorage2({
+    cloudinary,
+    folder: 'courses',
     params: {
-      resource_type: "raw"
+      resource_type: "video"
     }
   });
   
   const upload = multer({ storage })
+  const upload2 = multer({ storage2 })
 
 
 // courseRoutes.post("/signup", upload.fields([{name: 'image'}, {name: 'video'}]), (req, res, next) => {
@@ -96,15 +109,46 @@ courseRoutes.get("/:courseId", (req,res,next) =>{
   });
 });
 
+courseRoutes.get("/:courseId/:userId/enroll", (req,res,next) =>{ 
+  console.log("I AM IN THE BACK END")
+  if(!mongoose.Types.ObjectId.isValid(req.params.courseId)){
+      next();  // show 404 if bad ObjectId format
+      return;
+  }
+  Course.findById(req.params.courseId)
+  .then((course)=>{
+    if(!course) {
+      next(); // show 404 if no course was found 
+      return;
+    }
+    console.log(course)
+    User.findByIdAndUpdate(
+      req.params.userId,
+      { $push: {courses: course} },
+      {runValidators: true, new: true} 
+    )
+    .then(()=>{
+      res.json(course);
+    })
+  })
+  .catch((err)=>{
+    next(err);
+  });
+});
+
 
 // PUT /api/course/:courseId/edit
 courseRoutes.put("/:courseId/edit", (req,res,next)=>{
+  console.log("I AM IN THE BACKEND")
 
   if(!mongoose.Types.ObjectId.isValid(req.params.courseId)){
     next();  // show 404 if bad ObjectId format
     return;
 }
+
+
   const {name, description, category, language} = req.body;
+  console.log(req.body.language)
 
   Course.findByIdAndUpdate (
     req.params.courseId,
@@ -180,15 +224,15 @@ courseRoutes.get("/:courseId/videos", (req,res,next)=>{
 
 
 // router.put("/course/:courseId/videos/add", (req,res,next)=>{}) // AAAASSSKKKK
-courseRoutes.post("/:courseId/videos/add", upload.single('file'), (req,res,next)=>{
+courseRoutes.post("/:courseId/videos/add", upload2.single('file',  {resource_type : "video"}), (req,res,next)=>{
 
-  // console.log("BACCCCCKKKK EEEEENNNNDDD")
+  console.log("BACCCCCKKKK EEEEENNNNDDD")
 
   if(!mongoose.Types.ObjectId.isValid(req.params.courseId)){
     next();  // show 404 if bad ObjectId format
     return;
 } 
-// console.log(req.file);
+console.log(req.file);
   const {originalname, secure_url} = req.file;
 
   Course.findByIdAndUpdate (
