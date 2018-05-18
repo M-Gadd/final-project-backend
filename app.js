@@ -16,9 +16,9 @@ const bcrypt       = require('bcrypt');
 
 mongoose.Promise = Promise;
 mongoose
-  .connect('mongodb://localhost/final-project-backend', {useMongoClient: true})
+  .connect(process.env.MONGODB_URI, {useMongoClient: true})
+  // 'mongodb://localhost/final-project-backend'
   // 
-  // process.env.MONGODB_URI
   .then(() => {
     console.log('Connected to Mongo!')
   }).catch(err => {
